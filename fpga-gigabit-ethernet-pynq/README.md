@@ -69,9 +69,37 @@ external-PHY board pinout and validated timing constraints before they are
 meaningful. Programming PL over JTAG does not route the built-in Ethernet
 traffic into PL.
 
+## PL-vs-PL CRC experiment
+
+The CRC implementation now has two selectable versions for a focused PL
+comparison:
+
+| Version | Source | Update logic |
+|---|---|---|
+| Baseline | `rtl/crc32_d8.v` | Eight dependent reflected-CRC bit steps for each input byte |
+| Parallel | `rtl/crc32_d8_parallel.v` | Explicit XOR matrix computes the same next CRC from the current state and byte |
+
+Both modules keep the same interface and accept one byte per enabled clock.
+The parallel version is a candidate for reducing the CRC combinational path;
+it is **not yet proven faster or smaller**. Run its equivalence test in Vivado:
+
+```sh
+vivado -mode batch -source fpga-gigabit-ethernet-pynq/scripts/build_project.tcl -tclargs crc_sim
+```
+
+`sim/tb_crc32_compare.v` checks both implementations against the standard
+`123456789` CRC-32/IEEE result and compares 1024 more bytes with enable gaps.
+For a performance claim, synthesize each module separately for
+`xc7z020clg400-1` under identical settings, then compare LUT/FF counts and the
+worst register-to-register delay. Record tool/version, clock constraint, and
+reports in `results/README.md`. This component-level experiment does not by
+itself demonstrate end-to-end Ethernet throughput improvement.
+
 ## Recording validation results
 
 After tests have actually run, record date, board image, host OS/Python version,
 board IP setup, commands, packet count, byte count, loss, and measured goodput
-in `results/README.md`. Attach Wireshark captures or screenshots when useful.
-Do not enter expected/example numbers as measured results.
+in `results/README.md`. For PL comparisons, also record FPGA part, Vivado
+version, clock target, resource use, and timing reports. Attach Wireshark
+captures or screenshots when useful. Do not enter expected/example numbers as
+measured results.

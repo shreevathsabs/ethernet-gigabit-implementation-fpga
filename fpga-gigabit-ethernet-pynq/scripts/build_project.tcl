@@ -7,8 +7,8 @@ if {$target eq ""} {
     set target prepare
 }
 
-if {$target ni {prepare synth impl timing bitstream sim}} {
-    error "Usage: vivado -mode batch -source build_project.tcl -tclargs prepare|synth|impl|timing|bitstream|sim"
+if {$target ni {prepare synth impl timing bitstream sim crc_sim}} {
+    error "Usage: vivado -mode batch -source build_project.tcl -tclargs prepare|synth|impl|timing|bitstream|sim|crc_sim"
 }
 
 create_project -force $project_name $project_dir -part xc7z020clg400-1
@@ -17,6 +17,7 @@ set_property simulator_language Mixed [current_project]
 
 set rtl_files [list \
     [file join $design_dir rtl crc32_d8.v] \
+    [file join $design_dir rtl crc32_d8_parallel.v] \
     [file join $design_dir rtl rgmii_to_gmii.v] \
     [file join $design_dir rtl arp_cache_engine.v] \
     [file join $design_dir rtl udp_ip_tx.v] \
@@ -28,9 +29,15 @@ add_files -fileset constrs_1 -norecurse \
     [file join $design_dir constraints pynq_z2_ethernet.xdc]
 add_files -fileset sim_1 -norecurse \
     [file join $design_dir sim tb_mac_ip_udp.v]
+add_files -fileset sim_1 -norecurse \
+    [file join $design_dir sim tb_crc32_compare.v]
 
 set_property top mac_ip_udp_axis_top [get_filesets sources_1]
-set_property top tb_mac_ip_udp [get_filesets sim_1]
+if {$target eq "crc_sim"} {
+    set_property top tb_crc32_compare [get_filesets sim_1]
+} else {
+    set_property top tb_mac_ip_udp [get_filesets sim_1]
+}
 set_property xsim.simulate.runtime all [get_filesets sim_1]
 update_compile_order -fileset sources_1
 update_compile_order -fileset sim_1
@@ -38,6 +45,9 @@ update_compile_order -fileset sim_1
 if {$target eq "prepare"} {
     puts "Project prepared at $project_dir for external PL-connected RGMII PHY."
 } elseif {$target eq "sim"} {
+    launch_simulation
+    run all
+} elseif {$target eq "crc_sim"} {
     launch_simulation
     run all
 } else {

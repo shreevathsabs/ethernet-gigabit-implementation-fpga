@@ -10,3 +10,7 @@ See [`fpga-gigabit-ethernet-pynq/README.md`](fpga-gigabit-ethernet-pynq/README.m
 for setup, execution, and evidence-based comparison instructions. The
 architecture diagram is
 [`fpga-gigabit-ethernet-pynq/docs/ps_ethernet_flow.svg`](fpga-gigabit-ethernet-pynq/docs/ps_ethernet_flow.svg).
+The proposal deck is
+[`PS_UDP_Performance_Comparison.pptx`](fpga-gigabit-ethernet-pynq/docs/PS_UDP_Performance_Comparison.pptx);
+its editable source is
+[`generate_presentation.py`](fpga-gigabit-ethernet-pynq/docs/generate_presentation.py).

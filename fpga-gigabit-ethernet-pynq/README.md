@@ -20,6 +20,18 @@ bitstream.
 
 ![PYNQ-Z2 PS Ethernet flow](docs/ps_ethernet_flow.svg)
 
+## Project presentation
+
+The literature survey, research gap, methodology, components, toolchain, and
+measurement plan are summarized in
+[`docs/PS_UDP_Performance_Comparison.pptx`](docs/PS_UDP_Performance_Comparison.pptx).
+The deck source is `docs/generate_presentation.py`. Regenerate it with Python 3
+and `python-pptx` installed:
+
+```sh
+python docs/generate_presentation.py
+```
+
 ## Run the demo
 
 1. Boot the PYNQ-Z2 with its supported PYNQ Linux image and connect the built-in

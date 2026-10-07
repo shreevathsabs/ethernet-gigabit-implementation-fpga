@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="700" viewBox="0 0 1100 700" role="img" aria-labelledby="title desc">
-  <title id="title">PYNQ-Z2 Processing System Ethernet project flow</title>
-  <desc id="desc">Host PC UDP tools connect over Ethernet to the PYNQ-Z2 built-in jack and RTL8211E PHY. The PHY connects to the Zynq Processing System GEM, whose ARM Linux runs the network stack and UDP echo service. The Programmable Logic is separate and is not in the Ethernet data path.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="660" viewBox="0 0 1100 660" role="img" aria-labelledby="title desc">
+  <title id="title">PYNQ-Z2 PS UDP server comparison</title>
+  <desc id="desc">A host PC runs the same UDP benchmark against either a Python per-packet server or a C server batching up to 32 datagrams with recvmmsg and sendmmsg. Both servers run on the PYNQ-Z2 ARM processing system and use the built-in Ethernet jack and PS GEM controller.</desc>
   <defs>
     <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
       <path d="M0,0 L0,6 L9,3 z" fill="#263238"/>
@@ -14,47 +14,45 @@
       .box { fill: #fff; stroke: #455a64; stroke-width: 2; rx: 8; }
       .board { fill: #e8f1fb; stroke: #1565c0; stroke-width: 2; rx: 12; }
       .ps { fill: #e8f5e9; stroke: #2e7d32; stroke-width: 2; rx: 8; }
-      .pl { fill: #f3e5f5; stroke: #7b1fa2; stroke-width: 2; stroke-dasharray: 7 5; rx: 8; }
+      .base { fill: #fff8e1; stroke: #ef6c00; stroke-width: 2; rx: 8; }
+      .fast { fill: #e0f2f1; stroke: #00897b; stroke-width: 2; rx: 8; }
       .arrow { stroke: #263238; stroke-width: 3; fill: none; marker-end: url(#arrow); }
-      .optional { stroke: #7b1fa2; stroke-width: 2; stroke-dasharray: 7 5; fill: none; }
     </style>
   </defs>
-  <rect class="bg" x="0" y="0" width="1100" height="700"/>
-  <text class="title" x="550" y="42" text-anchor="middle">PYNQ-Z2 Ethernet demo — PS-based implementation</text>
+  <rect class="bg" x="0" y="0" width="1100" height="660"/>
+  <text class="title" x="550" y="42" text-anchor="middle">PS-vs-PS UDP echo performance comparison</text>
 
-  <rect class="box" x="45" y="205" width="220" height="175"/>
-  <text class="head" x="155" y="238" text-anchor="middle">Host PC</text>
-  <text class="label" x="155" y="273" text-anchor="middle">Python UDP client</text>
-  <text class="label" x="155" y="302" text-anchor="middle">Loopback + throughput</text>
-  <text class="label" x="155" y="331" text-anchor="middle">Wireshark capture</text>
+  <rect class="box" x="35" y="220" width="245" height="190"/>
+  <text class="head" x="157" y="256" text-anchor="middle">Host PC</text>
+  <text class="label" x="157" y="294" text-anchor="middle">Same Python benchmark</text>
+  <text class="label" x="157" y="325" text-anchor="middle">Sequence + integrity check</text>
+  <text class="label" x="157" y="356" text-anchor="middle">Goodput, loss, RTT</text>
+  <text class="small" x="157" y="386" text-anchor="middle">Run each server in turn</text>
 
-  <rect class="board" x="365" y="100" width="675" height="480"/>
-  <text class="head" x="702" y="137" text-anchor="middle">TUL PYNQ-Z2 development board</text>
+  <rect class="board" x="340" y="90" width="720" height="500"/>
+  <text class="head" x="700" y="128" text-anchor="middle">TUL PYNQ-Z2 development board</text>
+  <rect class="box" x="380" y="200" width="160" height="120"/>
+  <text class="head" x="460" y="237" text-anchor="middle">Built-in RJ45</text>
+  <text class="label" x="460" y="269" text-anchor="middle">RTL8211E PHY</text>
+  <text class="small" x="460" y="296" text-anchor="middle">PS-connected</text>
 
-  <rect class="box" x="405" y="190" width="175" height="130"/>
-  <text class="head" x="492" y="225" text-anchor="middle">RJ45 jack</text>
-  <text class="label" x="492" y="258" text-anchor="middle">RTL8211E PHY</text>
-  <text class="small" x="492" y="286" text-anchor="middle">Built-in Ethernet</text>
+  <rect class="ps" x="595" y="160" width="425" height="390"/>
+  <text class="head" x="807" y="197" text-anchor="middle">Zynq PS GEM + ARM Linux</text>
+  <text class="small" x="807" y="224" text-anchor="middle">Same NIC, kernel, IP stack and board for both runs</text>
+  <rect class="base" x="650" y="255" width="315" height="100"/>
+  <text class="head" x="807" y="289" text-anchor="middle">Baseline: Python UDP echo</text>
+  <text class="label" x="807" y="321" text-anchor="middle">recvfrom() + sendto() per datagram</text>
+  <rect class="fast" x="650" y="390" width="315" height="112"/>
+  <text class="head" x="807" y="425" text-anchor="middle">Candidate: C batched UDP echo</text>
+  <text class="label" x="807" y="457" text-anchor="middle">recvmmsg() + sendmmsg(), batch up to 32</text>
+  <text class="small" x="807" y="482" text-anchor="middle">Fewer user/kernel transitions (hypothesis)</text>
 
-  <rect class="ps" x="645" y="170" width="350" height="190"/>
-  <text class="head" x="820" y="207" text-anchor="middle">Zynq Processing System (PS)</text>
-  <text class="label" x="820" y="245" text-anchor="middle">GEM Ethernet controller</text>
-  <text class="label" x="820" y="276" text-anchor="middle">Linux driver + TCP/IP stack</text>
-  <text class="label" x="820" y="307" text-anchor="middle">ARM Cortex-A9 Python UDP echo</text>
-  <text class="small" x="820" y="338" text-anchor="middle">ARP/IP/UDP handled here</text>
+  <path class="arrow" d="M280 300 L380 260"/>
+  <text class="small" x="328" y="260" text-anchor="middle">Ethernet cable</text>
+  <path class="arrow" d="M540 260 L595 260"/>
+  <text class="small" x="567" y="241" text-anchor="middle">MIO</text>
+  <path class="arrow" d="M540 260 C565 260 570 440 650 440"/>
+  <text class="small" x="570" y="388" text-anchor="middle">same PS path</text>
 
-  <rect class="pl" x="645" y="405" width="350" height="105"/>
-  <text class="head" x="820" y="444" text-anchor="middle">Programmable Logic (PL)</text>
-  <text class="label" x="820" y="475" text-anchor="middle">Not in this Ethernet data path</text>
-  <text class="small" x="820" y="496" text-anchor="middle">Optional separate acceleration only</text>
-
-  <path class="arrow" d="M265 270 L405 270"/>
-  <text class="label" x="335" y="250" text-anchor="middle">Ethernet cable</text>
-  <path class="arrow" d="M580 255 L645 255"/>
-  <text class="small" x="612" y="236" text-anchor="middle">MIO</text>
-
-  <rect class="box" x="430" y="615" width="255" height="55"/>
-  <text class="label" x="557" y="649" text-anchor="middle">Vivado/JTAG: optional PL work</text>
-  <path class="optional" d="M685 615 C740 565, 775 545, 805 510"/>
-  <text class="small" x="735" y="575">does not carry Ethernet</text>
+  <text class="small" x="550" y="625" text-anchor="middle">PL / Vivado is not part of this experiment. Compare only measured, repeated board results.</text>
 </svg>

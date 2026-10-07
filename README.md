@@ -1,15 +1,12 @@
-# PYNQ-Z2 Gigabit Ethernet Demonstration
+# PYNQ-Z2 PS UDP Performance Comparison
 
-This project uses the PYNQ-Z2's built-in Ethernet jack through the Zynq
-Processing System (PS) GEM controller. The ARM Cortex-A9 runs Linux and a
-Python UDP echo application; test clients run on a host PC. Ethernet traffic
-does not pass through custom Programmable Logic (PL) MAC or RGMII RTL.
+This project compares two UDP echo-server implementations running on the
+PYNQ-Z2 Zynq Processing System (PS): a Python baseline and a candidate Linux C
+server using batched UDP socket system calls. Both use the same built-in
+Ethernet jack, PS GEM controller, host benchmark, and test settings. The C
+version is only considered better if board measurements show an improvement.
 
 See [`fpga-gigabit-ethernet-pynq/README.md`](fpga-gigabit-ethernet-pynq/README.md)
-for setup, execution, and validation instructions. The revised architecture
-diagram is
+for setup, execution, and evidence-based comparison instructions. The
+architecture diagram is
 [`fpga-gigabit-ethernet-pynq/docs/ps_ethernet_flow.svg`](fpga-gigabit-ethernet-pynq/docs/ps_ethernet_flow.svg).
-
-The repository also includes a separate PL RGMII RTL reference under
-`fpga-gigabit-ethernet-pynq/rtl/`. It requires an external PHY connected to PL;
-it does not connect to the PYNQ-Z2's built-in Ethernet jack.

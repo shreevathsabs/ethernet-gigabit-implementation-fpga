@@ -1,25 +1,36 @@
-# Validation results
+# PS UDP comparison results
 
-Add measured results here after testing on a PYNQ-Z2. No board or Vivado
-measurements have been recorded yet.
+No PYNQ-Z2 measurements have been recorded yet. Keep raw JSONL benchmark
+outputs and server logs with this report; do not present localhost numbers as
+board results.
 
-Record at least:
+## Test configuration
 
-- Test date and PYNQ image/version
-- Host operating system and Python version
-- Network topology and link speed/duplex
-- UDP loopback command, payload length, packets sent/verified
-- Throughput command, duration, sent/received/lost packets, measured goodput
-- Wireshark observations or capture filename
-- Any errors, configuration changes, or repeatability notes
+| Item | Value |
+|---|---|
+| Test date/time | |
+| PYNQ image and kernel | |
+| Board/host link speed and duplex | |
+| Host OS and Python version | |
+| C compiler/version and flags | |
+| Requested / actual socket buffers | |
+| Payload sizes, burst size, and duration | |
+| Repetitions and run order | |
 
-For the PL CRC baseline-versus-parallel experiment, also record:
+## Results
 
-- Vivado version, FPGA part, and synthesis strategy
-- Clock constraint and the reported worst register-to-register delay
-- LUT and flip-flop utilization for each separately synthesized CRC module
-- CRC simulation result and report/log file locations
-- Whether each implementation meets the same target clock
+Run at least five paired trials for each payload length. Alternate run order
+(Python/C then C/Python) and compare medians. Include raw JSONL files, benchmark
+output, server CPU summaries, and Wireshark capture references.
 
-Do not describe the parallel XOR implementation as an improvement unless
-identical Vivado runs show a measurable benefit without changing CRC behavior.
+| Payload bytes | Variant | Median replies/s | Median goodput Mbps | Median loss % | Median p95 RTT ms | Server CPU seconds | Notes |
+|---:|---|---:|---:|---:|---:|---:|---|
+| | Python baseline | | | | | | |
+| | Batched C | | | | | | |
+
+## Interpretation
+
+State which metric is the primary success criterion before testing. Claim an
+improvement only if repeated comparable trials show a consistent benefit
+without unacceptable packet loss, corruption, or latency regressions. Include
+limitations and any inconclusive measurements.

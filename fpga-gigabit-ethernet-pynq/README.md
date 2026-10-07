@@ -1,21 +1,20 @@
-# PYNQ-Z2 Ethernet using the Processing System
+# PYNQ-Z2 PS UDP Performance Comparison
 
-This version uses the board's built-in Ethernet jack. The jack's RTL8211E PHY
-is connected to the Zynq-7000 Processing System (PS) GEM Ethernet controller.
-Linux on the ARM Cortex-A9 runs the Ethernet driver and network stack, and
-`sw/udp_echo_server.py` provides a UDP application endpoint. This is real
-networking hardware on the board, but it is not a custom PL Ethernet stack.
+This project compares two UDP echo-server implementations on the PYNQ-Z2 Zynq
+Processing System (PS), using its built-in RTL8211E Ethernet PHY and PS GEM
+controller:
 
-The main demonstration is PS-based, and Vivado is not needed for that network
-path. A separate PL reference implementation is included in `rtl/`, with a
-Vivado script, simulation testbench, and pin-agnostic XDC template. This
-reference requires an **external RGMII PHY connected to PL**; it cannot use the
-built-in jack. Its XDC intentionally contains no invented PYNQ-Z2 package-pin
-assignments. The RTL is provided as a separate learning/reference path and has
-not been verified as production-ready or validated on the board.
+| Version | Program on the board | Per-packet behavior |
+|---|---|---|
+| Baseline | `sw/udp_echo_server.py` | Python `recvfrom` and `sendto` for each datagram |
+| Candidate | `sw/udp_echo_server_batch.c` | Linux C `recvmmsg` and `sendmmsg`, batching up to 32 datagrams per call |
 
-Using PL to process traffic from the PS GEM would require a separate AXI/DMA
-datapath and is outside the PS demo's current scope.
+Both versions are real software running on the board's ARM Cortex-A9 under
+Linux. They share the same host benchmark, packet format, payload lengths, and
+requested socket-buffer size. The candidate is intended to reduce user/kernel
+transitions; actual performance gains must be measured and are not assumed.
+This PS-vs-PS project does not include a PL Ethernet data path or Vivado
+bitstream.
 
 ## Data path
 
@@ -27,79 +26,87 @@ datapath and is outside the PS demo's current scope.
    RJ45 jack to the same LAN as the host PC. Connect power and configure the
    board's network using the normal Linux/DHCP setup.
 2. Find the board's IP address from the PYNQ console with `hostname -I`.
-3. Copy `sw/udp_echo_server.py` to the board, for example:
+3. Copy both server implementations to the board:
 
    ```sh
-   scp fpga-gigabit-ethernet-pynq/sw/udp_echo_server.py xilinx@<board-ip>:/home/xilinx/
+   scp fpga-gigabit-ethernet-pynq/sw/udp_echo_server.py fpga-gigabit-ethernet-pynq/sw/udp_echo_server_batch.c xilinx@<board-ip>:/home/xilinx/
    ```
 
-4. Start the echo service on the board:
+4. Start the Python baseline on the board:
 
    ```sh
-   ssh xilinx@<board-ip> "python3 /home/xilinx/udp_echo_server.py --port 5001"
+   ssh xilinx@<board-ip> "python3 /home/xilinx/udp_echo_server.py --port 5001 --socket-buffer 4194304"
    ```
 
    Leave it running while testing. Stop it with Ctrl-C; it prints packet and
    byte totals on exit.
-5. From the host PC, run the integrity test:
+5. Run the integrity test against the Python baseline. Stop it with Ctrl-C,
+   compile the C candidate on the board, then start the candidate:
+
+   ```sh
+   python fpga-gigabit-ethernet-pynq/sw/udp_loopback_test.py --host <board-ip> --port 5001
+   ssh xilinx@<board-ip> "gcc -O3 -Wall -Wextra -Werror -std=gnu11 /home/xilinx/udp_echo_server_batch.c -o /home/xilinx/udp_echo_server_batch"
+   ssh xilinx@<board-ip> "/home/xilinx/udp_echo_server_batch 5001 4194304"
+   ```
+
+6. Run the same integrity test against the C candidate:
 
    ```sh
    python fpga-gigabit-ethernet-pynq/sw/udp_loopback_test.py --host <board-ip> --port 5001
    ```
 
-6. Measure received application goodput:
+7. Measure each version using identical benchmark parameters. Add `--variant`
+   and separate JSONL output files so runs are attributable and comparable:
 
    ```sh
-   python fpga-gigabit-ethernet-pynq/sw/throughput_benchmark.py --host <board-ip> --port 5001 --seconds 5 --length 1472
+   python fpga-gigabit-ethernet-pynq/sw/throughput_benchmark.py --host <board-ip> --port 5001 --variant python --seconds 10 --length 1472 --burst-size 32 --socket-buffer 4194304 --output python.jsonl
+   python fpga-gigabit-ethernet-pynq/sw/throughput_benchmark.py --host <board-ip> --port 5001 --variant c --seconds 10 --length 1472 --burst-size 32 --socket-buffer 4194304 --output c.jsonl
    ```
 
-Both test scripts use standard Python sockets. The throughput result includes
-host, Linux, and UDP echo application overhead; it is not a PHY line-rate
-measurement. Run Wireshark on the host's Ethernet interface to inspect ARP and
-UDP packets. ARP is handled by Linux and the PS GEM driver, not custom PL RTL.
+   Run the Python command only while the Python server is active. Stop it, start
+   the C server, and then run the C command. Do not run both servers at once.
+   Repeat each run at least five times for payload sizes 64, 512, and 1472
+   bytes, alternating which server runs first.
+   Keep host, cable/switch, board image, port, packet sizes, socket buffers,
+   test duration, and host benchmark process unchanged. Stop one server before
+   starting the other; they cannot bind the same port simultaneously.
+   The same 32-packet burst is used for both; it gives the batched server an
+   opportunity to receive multiple queued datagrams in one system call.
 
-## Vivado's role
+8. Compare the median results:
 
-For the selected PS networking demonstration, Vivado is not used to create an
-Ethernet bitstream. Use the board's PYNQ image and Linux networking tools.
-The optional PL reference can be opened with
-`vivado -mode batch -source scripts/build_project.tcl -tclargs sim` from
-`fpga-gigabit-ethernet-pynq/`; synthesis and implementation require a real
-external-PHY board pinout and validated timing constraints before they are
-meaningful. Programming PL over JTAG does not route the built-in Ethernet
-traffic into PL.
+   ```sh
+   python fpga-gigabit-ethernet-pynq/sw/compare_results.py --python python.jsonl --c c.jsonl
+   ```
 
-## PL-vs-PL CRC experiment
+Both client scripts use Python sockets. The benchmark records sent/unique
+replies, loss, duplicate/corrupt replies, application goodput, replies/sec, and
+mean/p50/p95 round-trip latency. It saves one JSON record per run. The C and
+Python servers print handled packet/byte counts and process CPU seconds on
+Ctrl-C. Also record CPU usage while running with the same Linux tool (such as
+`pidstat` if installed, otherwise `top`) and use Wireshark to check the actual
+ARP/UDP traffic. Network goodput includes host, Linux, and application
+overhead; it is not a PHY line-rate measurement.
 
-The CRC implementation now has two selectable versions for a focused PL
-comparison:
+## How to demonstrate an improvement
 
-| Version | Source | Update logic |
-|---|---|---|
-| Baseline | `rtl/crc32_d8.v` | Eight dependent reflected-CRC bit steps for each input byte |
-| Parallel | `rtl/crc32_d8_parallel.v` | Explicit XOR matrix computes the same next CRC from the current state and byte |
-
-Both modules keep the same interface and accept one byte per enabled clock.
-The parallel version is a candidate for reducing the CRC combinational path;
-it is **not yet proven faster or smaller**. Run its equivalence test in Vivado:
-
-```sh
-vivado -mode batch -source fpga-gigabit-ethernet-pynq/scripts/build_project.tcl -tclargs crc_sim
-```
-
-`sim/tb_crc32_compare.v` checks both implementations against the standard
-`123456789` CRC-32/IEEE result and compares 1024 more bytes with enable gaps.
-For a performance claim, synthesize each module separately for
-`xc7z020clg400-1` under identical settings, then compare LUT/FF counts and the
-worst register-to-register delay. Record tool/version, clock constraint, and
-reports in `results/README.md`. This component-level experiment does not by
-itself demonstrate end-to-end Ethernet throughput improvement.
+Use the results table generated by `compare_results.py`, plus repeated raw
+JSONL runs and server logs. The C version only supports the claim “better” if
+it improves a chosen metric (for example median replies/sec or goodput) while
+keeping packet loss and corruption acceptably low. Include latency and CPU use
+as tradeoffs. Explain the implementation change—batching Linux UDP calls—and
+do not claim a speedup if measurements overlap or are inconclusive.
+For the loss row, positive percentage points mean reduced loss; positive
+percentages on the other rows indicate improvement.
 
 ## Recording validation results
 
-After tests have actually run, record date, board image, host OS/Python version,
-board IP setup, commands, packet count, byte count, loss, and measured goodput
-in `results/README.md`. For PL comparisons, also record FPGA part, Vivado
-version, clock target, resource use, and timing reports. Attach Wireshark
-captures or screenshots when useful. Do not enter expected/example numbers as
-measured results.
+Record board image/kernel, host OS/Python version, network link speed/duplex,
+socket-buffer values, test commands, all repeated runs, server CPU summaries,
+and Wireshark observations in `results/README.md`. Do not enter expected or
+localhost test numbers as board measurements.
+
+Before testing, capture board configuration with `uname -a`,
+`cat /etc/os-release`, `gcc --version`, and `getconf LONG_BIT`; record
+`ethtool eth0` output too when that utility is installed. This verifies the
+Linux/compiler environment and link settings before drawing conclusions.

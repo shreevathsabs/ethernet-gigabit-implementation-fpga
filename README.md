@@ -9,3 +9,7 @@ See [`fpga-gigabit-ethernet-pynq/README.md`](fpga-gigabit-ethernet-pynq/README.m
 for setup, execution, and validation instructions. The revised architecture
 diagram is
 [`fpga-gigabit-ethernet-pynq/docs/ps_ethernet_flow.svg`](fpga-gigabit-ethernet-pynq/docs/ps_ethernet_flow.svg).
+
+The repository also includes a separate PL RGMII RTL reference under
+`fpga-gigabit-ethernet-pynq/rtl/`. It requires an external PHY connected to PL;
+it does not connect to the PYNQ-Z2's built-in Ethernet jack.

@@ -6,11 +6,16 @@ Linux on the ARM Cortex-A9 runs the Ethernet driver and network stack, and
 `sw/udp_echo_server.py` provides a UDP application endpoint. This is real
 networking hardware on the board, but it is not a custom PL Ethernet stack.
 
-The repository intentionally contains no PL RGMII constraints, custom MAC RTL,
-or Ethernet bitstream project: those would not connect to the onboard PHY.
-Vivado is not needed for the network path. The PL remains available for other
-logic, but using it to process PS Ethernet traffic would require a separate
-AXI/DMA datapath and is outside this project's current scope.
+The main demonstration is PS-based, and Vivado is not needed for that network
+path. A separate PL reference implementation is included in `rtl/`, with a
+Vivado script, simulation testbench, and pin-agnostic XDC template. This
+reference requires an **external RGMII PHY connected to PL**; it cannot use the
+built-in jack. Its XDC intentionally contains no invented PYNQ-Z2 package-pin
+assignments. The RTL is provided as a separate learning/reference path and has
+not been verified as production-ready or validated on the board.
+
+Using PL to process traffic from the PS GEM would require a separate AXI/DMA
+datapath and is outside the PS demo's current scope.
 
 ## Data path
 
@@ -55,10 +60,14 @@ UDP packets. ARP is handled by Linux and the PS GEM driver, not custom PL RTL.
 
 ## Vivado's role
 
-For this PS-only networking demonstration, Vivado is not used to create an
+For the selected PS networking demonstration, Vivado is not used to create an
 Ethernet bitstream. Use the board's PYNQ image and Linux networking tools.
-Vivado Hardware Manager/JTAG may still be used for unrelated PL development,
-but programming PL over JTAG does not route Ethernet traffic into PL.
+The optional PL reference can be opened with
+`vivado -mode batch -source scripts/build_project.tcl -tclargs sim` from
+`fpga-gigabit-ethernet-pynq/`; synthesis and implementation require a real
+external-PHY board pinout and validated timing constraints before they are
+meaningful. Programming PL over JTAG does not route the built-in Ethernet
+traffic into PL.
 
 ## Recording validation results
 

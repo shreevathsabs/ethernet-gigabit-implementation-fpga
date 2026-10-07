@@ -1,9 +1,11 @@
-# ethernet-gigabit-implementation-fpga
+# PYNQ-Z2 Gigabit Ethernet Demonstration
 
-PL-side Ethernet RTL sources and build instructions are in
-[`fpga-gigabit-ethernet-pynq/`](fpga-gigabit-ethernet-pynq/README.md).
+This project uses the PYNQ-Z2's built-in Ethernet jack through the Zynq
+Processing System (PS) GEM controller. The ARM Cortex-A9 runs Linux and a
+Python UDP echo application; test clients run on a host PC. Ethernet traffic
+does not pass through custom Programmable Logic (PL) MAC or RGMII RTL.
 
-The PYNQ-Z2 onboard Ethernet PHY is connected to the Zynq processing system
-through MIO, not to PL RGMII pins. The PL RTL therefore requires an external
-RGMII PHY connected to PL; the included XDC deliberately does not invent
-PYNQ-Z2 package-pin assignments.
+See [`fpga-gigabit-ethernet-pynq/README.md`](fpga-gigabit-ethernet-pynq/README.md)
+for setup, execution, and validation instructions. The revised architecture
+diagram is
+[`fpga-gigabit-ethernet-pynq/docs/ps_ethernet_flow.svg`](fpga-gigabit-ethernet-pynq/docs/ps_ethernet_flow.svg).

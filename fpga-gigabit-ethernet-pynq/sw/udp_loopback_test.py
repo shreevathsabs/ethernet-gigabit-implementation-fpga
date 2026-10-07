@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Send UDP payloads to a remote echo service and verify exact byte integrity."""
+"""Send UDP payloads to the PYNQ-Z2 PS echo service and verify byte integrity."""
 
 import argparse
 import socket
@@ -8,7 +8,7 @@ import time
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--host", required=True, help="FPGA UDP server/echo address")
+    parser.add_argument("--host", required=True, help="PYNQ-Z2 IP address")
     parser.add_argument("--port", type=int, default=5001)
     parser.add_argument("--count", type=int, default=100)
     parser.add_argument("--length", type=int, default=256)

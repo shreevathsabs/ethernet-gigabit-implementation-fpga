@@ -1,50 +1,68 @@
-# PL Ethernet prototype for Zynq-7000
+# PYNQ-Z2 Ethernet using the Processing System
 
-This source tree describes a PL-side 10/100/1000 RGMII MAC/IP/UDP prototype
-for `xc7z020clg400-1`. It requires an **external RGMII PHY connected to PL**.
-The onboard RTL8211E on a TUL PYNQ-Z2 is wired to the processing-system GEM
-through MIO; it is not available as a PL RGMII interface. Consequently this
-tree intentionally has no PYNQ-Z2 package-pin assignments and cannot operate
-the board's onboard Ethernet connector as a PL-only design.
+This version uses the board's built-in Ethernet jack. The jack's RTL8211E PHY
+is connected to the Zynq-7000 Processing System (PS) GEM Ethernet controller.
+Linux on the ARM Cortex-A9 runs the Ethernet driver and network stack, and
+`sw/udp_echo_server.py` provides a UDP application endpoint. This is real
+networking hardware on the board, but it is not a custom PL Ethernet stack.
 
-The XDC contains placeholder-free clocks and illustrative PHY-side timing
-values, but it is not a board-verified pinout or timing signoff. Select an
-external PHY/connector, consult its data sheet and the actual PCB timing, then
-add verified package pins and update input/output delays before implementation.
-`rgmii_to_gmii.v` uses 7-series `IDDR` and `ODDR` primitives and requires Vivado
-or a simulator configured with the Xilinx UNISIM library.
+The repository intentionally contains no PL RGMII constraints, custom MAC RTL,
+or Ethernet bitstream project: those would not connect to the onboard PHY.
+Vivado is not needed for the network path. The PL remains available for other
+logic, but using it to process PS Ethernet traffic would require a separate
+AXI/DMA datapath and is outside this project's current scope.
 
-## RTL interfaces and current behavior
+## Data path
 
-The top receives payload bytes on AXI4-Stream and sends a UDP datagram to the
-most recently learned ARP peer, using the configured `UDP_PORT` for both source
-and destination ports. ARP requests for `BOARD_IP` are answered automatically.
-Received UDP payload is placed in a 2 KiB output FIFO and exposed on the RX
-AXI4-Stream interface. The 2 KiB TX buffer accepts a packet at a time; payloads
-larger than 1472 bytes are discarded rather than transmitted. Board MAC/IP and
-UDP port are Verilog parameters.
+![PYNQ-Z2 PS Ethernet flow](docs/ps_ethernet_flow.svg)
 
-This is a bring-up baseline, not a claimed production signoff: it does not
-implement PHY management/MDIO, VLAN, IP fragmentation, UDP checksum
-verification, retransmission, descriptor DMA, or a verified asynchronous
-clock-domain crossing between recovered RGMII RXC and `clk`. Use a common,
-phase-controlled 125 MHz design clock only when the external PHY clocking and
-timing architecture has been validated. The supplied testbench checks emitted
-ARP and UDP frame fields and FCS in Vivado simulation; hardware use requires
-board-specific timing closure and system-level interoperability validation.
+## Run the demo
 
-## Build and test
+1. Boot the PYNQ-Z2 with its supported PYNQ Linux image and connect the built-in
+   RJ45 jack to the same LAN as the host PC. Connect power and configure the
+   board's network using the normal Linux/DHCP setup.
+2. Find the board's IP address from the PYNQ console with `hostname -I`.
+3. Copy `sw/udp_echo_server.py` to the board, for example:
 
-Run from Vivado 2022.2 or newer:
+   ```sh
+   scp fpga-gigabit-ethernet-pynq/sw/udp_echo_server.py xilinx@<board-ip>:/home/xilinx/
+   ```
 
-```text
-vivado -mode batch -source scripts/build_project.tcl -tclargs prepare
-vivado -mode batch -source scripts/build_project.tcl -tclargs synth
-vivado -mode batch -source scripts/build_project.tcl -tclargs impl
-vivado -mode batch -source scripts/build_project.tcl -tclargs timing
-vivado -mode batch -source scripts/build_project.tcl -tclargs bitstream
-vivado -mode batch -source scripts/build_project.tcl -tclargs sim
-```
+4. Start the echo service on the board:
 
-The Python scripts exercise a remote UDP echo endpoint on the FPGA or test
-system; this RTL does not itself echo incoming UDP packets.
+   ```sh
+   ssh xilinx@<board-ip> "python3 /home/xilinx/udp_echo_server.py --port 5001"
+   ```
+
+   Leave it running while testing. Stop it with Ctrl-C; it prints packet and
+   byte totals on exit.
+5. From the host PC, run the integrity test:
+
+   ```sh
+   python fpga-gigabit-ethernet-pynq/sw/udp_loopback_test.py --host <board-ip> --port 5001
+   ```
+
+6. Measure received application goodput:
+
+   ```sh
+   python fpga-gigabit-ethernet-pynq/sw/throughput_benchmark.py --host <board-ip> --port 5001 --seconds 5 --length 1472
+   ```
+
+Both test scripts use standard Python sockets. The throughput result includes
+host, Linux, and UDP echo application overhead; it is not a PHY line-rate
+measurement. Run Wireshark on the host's Ethernet interface to inspect ARP and
+UDP packets. ARP is handled by Linux and the PS GEM driver, not custom PL RTL.
+
+## Vivado's role
+
+For this PS-only networking demonstration, Vivado is not used to create an
+Ethernet bitstream. Use the board's PYNQ image and Linux networking tools.
+Vivado Hardware Manager/JTAG may still be used for unrelated PL development,
+but programming PL over JTAG does not route Ethernet traffic into PL.
+
+## Recording validation results
+
+After tests have actually run, record date, board image, host OS/Python version,
+board IP setup, commands, packet count, byte count, loss, and measured goodput
+in `results/README.md`. Attach Wireshark captures or screenshots when useful.
+Do not enter expected/example numbers as measured results.

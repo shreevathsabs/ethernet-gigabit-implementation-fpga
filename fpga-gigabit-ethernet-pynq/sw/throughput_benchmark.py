@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Measure UDP packet loss and received application goodput over a time window."""
+"""Measure UDP loss and goodput against the PYNQ-Z2 PS echo service."""
 
 import argparse
 import socket
@@ -8,7 +8,7 @@ import time
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--host", required=True, help="FPGA UDP echo address")
+    parser.add_argument("--host", required=True, help="PYNQ-Z2 IP address")
     parser.add_argument("--port", type=int, default=5001)
     parser.add_argument("--seconds", type=float, default=5.0)
     parser.add_argument("--length", type=int, default=1472)

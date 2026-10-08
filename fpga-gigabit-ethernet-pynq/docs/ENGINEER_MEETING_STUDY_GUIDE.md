@@ -65,14 +65,14 @@ intentional independent variable.
 
 ## 4. What changed in the code
 
-### Python baseline — `sw/udp_echo_server.py`
+### Python baseline — `vitis/python/board/udp_echo_server.py`
 
 The server creates an IPv4 datagram socket, requests send/receive buffers,
 binds to `0.0.0.0:5001`, receives one datagram with `recvfrom()`, then returns
 that exact datagram to its sender with `sendto()`. The loop is simple and easy
 to inspect, which makes it a useful baseline.
 
-### Batched C candidate — `sw/udp_echo_server_batch.c`
+### Batched C candidate — `vitis/c/udp_echo_server_batch.c`
 
 The C server prepares arrays of 32 packet slots and Linux message structures.
 Each `recvmmsg()` call can receive up to 32 queued datagrams; each `sendmmsg()`
@@ -89,13 +89,13 @@ APIs, not portable POSIX APIs.
 
 ### Host tools
 
-- `sw/udp_loopback_test.py` sends deterministic payloads sequentially and
+- `vitis/python/host/udp_loopback_test.py` sends deterministic payloads sequentially and
   requires exact byte-for-byte echoes.
-- `sw/throughput_benchmark.py` encodes a sequence number in the first 8 bytes,
+- `vitis/python/host/throughput_benchmark.py` encodes a sequence number in the first 8 bytes,
   sends in configured bursts, checks returned length and payload, tracks
   unique, duplicate, corrupt, and unknown replies, and reports throughput,
   loss, and round-trip latency. It writes one JSON object per run.
-- `sw/compare_results.py` reads Python and C JSONL files, rejects mismatched
+- `vitis/python/host/compare_results.py` reads Python and C JSONL files, rejects mismatched
   configurations, and compares their per-metric medians.
 
 ## 5. Key terms to explain clearly
@@ -157,7 +157,7 @@ comes with a latency cost. Loss is calculated after the drain interval.
 
 ## 8. Literature survey and research gap
 
-The sources listed in the slide deck establish the APIs and testing context:
+The following primary references establish the APIs and testing context:
 
 1. Python's socket documentation describes the normal datagram interface used
    for the baseline.
@@ -230,7 +230,7 @@ Additional points:
   and compare them too.
 - The comparator verifies common requested settings and reports medians, but
   does not calculate confidence intervals or statistical significance. Show
-  each run or min/median/max (or a box plot) in the presentation.
+  each run or min/median/max (or a box plot) when presenting results.
 - A large offered load can make the host generator the bottleneck. CPU usage
   and loss at both ends help identify this.
 - The C server's process CPU seconds are not the same thing as system-wide CPU
@@ -324,11 +324,11 @@ AXI/DMA connection to the PS GEM, which is a different project.”
 
 | File | What to point out |
 |---|---|
-| `sw/udp_echo_server.py` | Socket setup, buffer request, bind, receive-one/send-one loop, shutdown counters |
-| `sw/udp_echo_server_batch.c` | 32 message slots, `recvmmsg`, oversize/truncation handling, peer-address preservation, partial `sendmmsg` loop |
-| `sw/throughput_benchmark.py` | 8-byte sequence number, burst sender, receive/drain loop, integrity check, formulas, JSON output |
-| `sw/udp_loopback_test.py` | Sequential deterministic test payload and exact echoed-byte comparison |
-| `sw/compare_results.py` | Configuration matching, medians, throughput percent change, loss percentage-point change |
+| `vitis/python/board/udp_echo_server.py` | Socket setup, buffer request, bind, receive-one/send-one loop, shutdown counters |
+| `vitis/c/udp_echo_server_batch.c` | 32 message slots, `recvmmsg`, oversize/truncation handling, peer-address preservation, partial `sendmmsg` loop |
+| `vitis/python/host/throughput_benchmark.py` | 8-byte sequence number, burst sender, receive/drain loop, integrity check, formulas, JSON output |
+| `vitis/python/host/udp_loopback_test.py` | Sequential deterministic test payload and exact echoed-byte comparison |
+| `vitis/python/host/compare_results.py` | Configuration matching, medians, throughput percent change, loss percentage-point change |
 | `results/README.md` | Empty template; board evidence has not been filled in |
 
 ## 13. Short preparation plan for tonight
@@ -343,8 +343,8 @@ AXI/DMA connection to the PS GEM, which is a different project.”
    occupancy is not instrumented yet; it demonstrates engineering judgement.
 5. Rehearse the first four likely questions above, especially why this is PS
    rather than PL and how improvement will be proven.
-6. Open the presentation and use the architecture, code-delta, methodology,
-   and pending-results slides to guide your explanation. Do not invent results.
+6. Use the architecture diagram and repository documentation to guide your
+   explanation. Do not invent results.
 
 ## 14. References
 

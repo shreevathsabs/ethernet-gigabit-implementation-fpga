@@ -15,3 +15,5 @@ The proposal deck is
 it now includes a dedicated full PS data-path block diagram and an appendix
 with all five project software source files. Its editable generation source is
 [`generate_presentation.py`](fpga-gigabit-ethernet-pynq/docs/generate_presentation.py).
+For the lead-engineer review, use the
+[`engineer meeting study guide`](fpga-gigabit-ethernet-pynq/docs/ENGINEER_MEETING_STUDY_GUIDE.md).

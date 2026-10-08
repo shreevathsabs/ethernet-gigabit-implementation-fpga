@@ -33,6 +33,10 @@ and `python-pptx` installed:
 python docs/generate_presentation.py
 ```
 
+For a technical walk-through, rehearsal pitch, likely engineer questions, and
+benchmark caveats, see
+[`docs/ENGINEER_MEETING_STUDY_GUIDE.md`](docs/ENGINEER_MEETING_STUDY_GUIDE.md).
+
 ## Run the demo
 
 1. Boot the PYNQ-Z2 with its supported PYNQ Linux image and connect the built-in

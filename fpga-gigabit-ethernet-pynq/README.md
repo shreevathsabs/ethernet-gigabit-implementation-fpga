@@ -23,7 +23,8 @@ bitstream.
 ## Project presentation
 
 The literature survey, research gap, methodology, components, toolchain, and
-measurement plan are summarized in
+measurement plan are followed by a full PS data-path block diagram and a
+complete source-code appendix for all five project software files in
 [`docs/PS_UDP_Performance_Comparison.pptx`](docs/PS_UDP_Performance_Comparison.pptx).
 The deck source is `docs/generate_presentation.py`. Regenerate it with Python 3
 and `python-pptx` installed:

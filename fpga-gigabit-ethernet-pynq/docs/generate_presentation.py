@@ -235,6 +235,135 @@ def add_cover(prs):
          7.60, 0.22, size=9, fill="A9BDCC")
 
 
+def add_full_block_diagram(prs, slide_number):
+    slide, top = base_slide(
+        prs, "Complete proposed-system block diagram", "Appendix | Architecture",
+        slide_number,
+        "Request path shown left-to-right; the UDP echo response returns over the same Ethernet path."
+    )
+    # Host outside the board.
+    rect(slide, 0.55, top + 1.15, 1.85, 1.45, WHITE, radius=True, line=LINE)
+    text(slide, "HOST PC", 0.75, top + 1.36, 1.45, 0.30,
+         size=15, fill=NAVY, bold=True, align=PP_ALIGN.CENTER)
+    text(slide, "Python benchmark\nWireshark capture", 0.70, top + 1.82,
+         1.55, 0.60, size=11, fill=MUTED, align=PP_ALIGN.CENTER)
+
+    # Development board boundary.
+    rect(slide, 2.92, top + 0.34, 9.75, 3.52, PALE_BLUE, radius=True,
+         line="89AFC8", width=1.5)
+    text(slide, "TUL PYNQ-Z2 BOARD", 3.18, top + 0.48, 9.20, 0.28,
+         size=13, fill=NAVY, bold=True, align=PP_ALIGN.CENTER)
+
+    blocks = [
+        (3.22, top + 1.42, 1.42, 1.13, "RJ45 + PHY",
+         "RTL8211E\nbuilt-in jack", TEAL),
+        (4.94, top + 1.42, 1.48, 1.13, "PS GEM",
+         "Ethernet MAC\nvia MIO", CYAN),
+        (6.73, top + 1.42, 1.70, 1.13, "Linux stack",
+         "Driver + IP/UDP\nsocket layer", AMBER),
+    ]
+    for x, y, w, h, heading, body, accent in blocks:
+        rect(slide, x, y, w, h, WHITE, radius=True, line=accent, width=1.4)
+        text(slide, heading, x + 0.07, y + 0.16, w - 0.14, 0.29,
+             size=12, fill=NAVY, bold=True, align=PP_ALIGN.CENTER)
+        text(slide, body, x + 0.08, y + 0.54, w - 0.16, 0.48,
+             size=10, fill=MUTED, align=PP_ALIGN.CENTER)
+
+    # Two alternative server implementations, run separately.
+    rect(slide, 9.40, top + 0.96, 2.94, 0.94, PALE_AMBER, radius=True,
+         line="E9C66F", width=1.3)
+    text(slide, "A  Python baseline", 9.55, top + 1.11, 2.64, 0.27,
+         size=13, fill=NAVY, bold=True, align=PP_ALIGN.CENTER)
+    text(slide, "recvfrom() → sendto()", 9.55, top + 1.49, 2.64, 0.23,
+         size=10, fill=MUTED, align=PP_ALIGN.CENTER)
+    rect(slide, 9.40, top + 2.16, 2.94, 0.94, PALE_TEAL, radius=True,
+         line="7CCEC0", width=1.3)
+    text(slide, "B  Batched C candidate", 9.55, top + 2.31, 2.64, 0.27,
+         size=13, fill=NAVY, bold=True, align=PP_ALIGN.CENTER)
+    text(slide, "recvmmsg() → sendmmsg()", 9.55, top + 2.69, 2.64, 0.23,
+         size=10, fill=MUTED, align=PP_ALIGN.CENTER)
+
+    # Packet flow and server-selection branch.
+    line(slide, 2.40, top + 1.88, 3.18, top + 1.88, TEAL, 2, arrow=True)
+    text(slide, "UDP request", 2.35, top + 1.51, 0.88, 0.25,
+         size=9, fill=MUTED, align=PP_ALIGN.CENTER)
+    line(slide, 4.65, top + 1.98, 4.90, top + 1.98, TEAL, 2, arrow=True)
+    line(slide, 6.43, top + 1.98, 6.68, top + 1.98, TEAL, 2, arrow=True)
+    line(slide, 8.44, top + 1.98, 9.12, top + 1.98, TEAL, 2, arrow=True)
+    line(slide, 9.12, top + 1.45, 9.12, top + 2.63, TEAL, 1.7)
+    line(slide, 9.12, top + 1.45, 9.36, top + 1.45, TEAL, 1.7, arrow=True)
+    line(slide, 9.12, top + 2.63, 9.36, top + 2.63, TEAL, 1.7, arrow=True)
+
+    rect(slide, 1.10, top + 4.08, 10.95, 0.62, NAVY, radius=True)
+    text(slide, "Same PS GEM + Linux stack in both experiments  •  Change only the UDP server implementation",
+         1.34, top + 4.23, 10.48, 0.28, size=13, fill=WHITE,
+         bold=True, align=PP_ALIGN.CENTER)
+    text(slide, "PL and Vivado are not part of this PS-vs-PS network path.",
+         1.16, top + 4.82, 10.85, 0.28, size=11, fill=MUTED,
+         italic=True, align=PP_ALIGN.CENTER)
+
+
+def add_source_index(prs, sources, slide_number):
+    slide, top = base_slide(
+        prs, "Complete source-code appendix", "Appendix | Code", slide_number,
+        "The following slides reproduce every current project source file in full; implementation files are split only for readability."
+    )
+    rows = [["Project source", "Purpose", "Pages"]]
+    for rel_path, purpose, _, pages in sources:
+        rows.append([rel_path, purpose, str(pages)])
+    widths = [4.10, 6.65, 1.10]
+    heights = [0.44] + [0.52] * len(sources)
+    table(slide, 0.76, top + 0.10, widths, heights, rows, font_size=10,
+          first_col_bold=True, header_font=10)
+    note_y = top + 0.72 + len(sources) * 0.52
+    rect(slide, 0.94, note_y, 11.40, 0.72, PALE_TEAL, radius=True)
+    text(slide, "The PPT is a presentation copy. Use the linked repository files as the editable source of truth.",
+         1.20, note_y + 0.19, 10.85, 0.34, size=13, fill=NAVY,
+         bold=True, align=PP_ALIGN.CENTER)
+
+
+def add_code_pages(prs, rel_path, purpose, content, first_slide_number,
+                   lines_per_slide=22):
+    lines = content.splitlines()
+    if content.endswith("\n"):
+        lines.append("")
+    page_count = max(1, (len(lines) + lines_per_slide - 1) // lines_per_slide)
+    for page in range(page_count):
+        start = page * lines_per_slide
+        end = min(start + lines_per_slide, len(lines))
+        page_lines = lines[start:end]
+        subtitle = (
+            f"{purpose}  |  source lines {start + 1}–{end} of {len(lines)}"
+        )
+        slide, top = base_slide(
+            prs, f"Source: {Path(rel_path).name}  •  {page + 1}/{page_count}",
+            "Appendix | Full source code",
+            first_slide_number + page,
+            subtitle,
+        )
+        rect(slide, 0.66, top + 0.02, 12.02, 5.10, NAVY, radius=True)
+        code_box = slide.shapes.add_textbox(
+            Inches(0.82), Inches(top + 0.12), Inches(11.72), Inches(4.90)
+        )
+        frame = code_box.text_frame
+        frame.clear()
+        frame.word_wrap = False
+        frame.margin_left = Inches(0.04)
+        frame.margin_right = Inches(0.04)
+        frame.margin_top = Inches(0.04)
+        frame.margin_bottom = Inches(0.02)
+        for line_index, code_line in enumerate(page_lines):
+            paragraph = frame.paragraphs[0] if line_index == 0 else frame.add_paragraph()
+            paragraph.text = code_line if code_line else " "
+            paragraph.space_after = Pt(0)
+            paragraph.space_before = Pt(0)
+            paragraph.line_spacing = Pt(12.0)
+            for run in paragraph.runs:
+                run.font.name = MONO
+                run.font.size = Pt(9)
+                run.font.color.rgb = color("E4EDF4")
+
+
 def build_deck():
     prs = Presentation()
     prs.slide_width = Inches(SW)
@@ -722,6 +851,35 @@ def build_deck():
                 size=9, fill=INK, gap=5, bullet_color=TEAL)
     text(s, "Sources accessed 7 Oct 2026. Platform-specific facts and all performance values should be verified against the actual board image and measurements.",
          5.49, top + 4.13, 6.65, 0.45, size=9, fill=MUTED, italic=True)
+
+    project_root = Path(__file__).resolve().parents[1]
+    source_specs = [
+        ("sw/udp_echo_server.py",
+         "Python baseline: one recvfrom/sendto per datagram."),
+        ("sw/udp_echo_server_batch.c",
+         "C candidate: Linux recvmmsg/sendmmsg batched echo server."),
+        ("sw/throughput_benchmark.py",
+         "Host benchmark: fixed bursts, sequence validation and metrics."),
+        ("sw/udp_loopback_test.py",
+         "Host functional test: exact payload echo verification."),
+        ("sw/compare_results.py",
+         "Analysis tool: compare repeated-run medians."),
+    ]
+    sources = []
+    for relative_path, purpose in source_specs:
+        source_text = (project_root / relative_path).read_text(encoding="utf-8")
+        source_lines = source_text.splitlines()
+        if source_text.endswith("\n"):
+            source_lines.append("")
+        page_count = max(1, (len(source_lines) + 21) // 22)
+        sources.append((relative_path, purpose, source_text, page_count))
+
+    add_full_block_diagram(prs, len(prs.slides) + 1)
+    add_source_index(prs, sources, len(prs.slides) + 1)
+    next_slide = len(prs.slides) + 1
+    for relative_path, purpose, source_text, page_count in sources:
+        add_code_pages(prs, relative_path, purpose, source_text, next_slide)
+        next_slide += page_count
 
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     prs.save(OUTPUT)

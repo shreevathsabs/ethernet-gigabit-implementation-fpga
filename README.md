@@ -12,5 +12,6 @@ architecture diagram is
 [`fpga-gigabit-ethernet-pynq/docs/ps_ethernet_flow.svg`](fpga-gigabit-ethernet-pynq/docs/ps_ethernet_flow.svg).
 The proposal deck is
 [`PS_UDP_Performance_Comparison.pptx`](fpga-gigabit-ethernet-pynq/docs/PS_UDP_Performance_Comparison.pptx);
-its editable source is
+it now includes a dedicated full PS data-path block diagram and an appendix
+with all five project software source files. Its editable generation source is
 [`generate_presentation.py`](fpga-gigabit-ethernet-pynq/docs/generate_presentation.py).
